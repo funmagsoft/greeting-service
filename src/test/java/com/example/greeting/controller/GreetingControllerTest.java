@@ -20,14 +20,14 @@ public class GreetingControllerTest {
     void greetsWithName() throws Exception {
         mockMvc.perform(get("/greeting").param("name", "marek"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.greeting").value("hello marek"));
+                .andExpect(jsonPath("$.greeting").value("hello you marek"));
     }
 
     @Test
     void defaultGreetingWhenNoName() throws Exception {
         mockMvc.perform(get("/greeting"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.greeting").value("hello world"));
+                .andExpect(jsonPath("$.greeting").value("hello you world"));
     }
 
 }
