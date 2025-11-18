@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  SHORT_SHA: ${{ github.sha[:7] }}
+  SHORT_SHA: ""
 
 jobs:
   build-test:
@@ -42,7 +42,10 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports
 
-      - name: Build container (no push)
+      - name: Set SHORT_SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Build build image
         run: |
           docker build -t greeting-service:${SHORT_SHA} .
 
