@@ -1,4 +1,4 @@
-name: CI
+name: Build and push Docker image to ACR
 
 on:
   pull_request:
