@@ -67,7 +67,8 @@ jobs:
       - name: Push Docker image to ACR
         run: |
           # Get access token from OIDC login
-          ACR_TOKEN=$(az acr login --name testmagoftware --expose-token --output tsv --query accessToken)
+          # ACR_TOKEN=$(az acr login --name testmagoftware --expose-token --output tsv --query accessToken)
+          ACR_TOKEN=$(az account get-access-token --resource https://management.azure.com/ --query accessToken -o tsv)
           # Login do ACR
           echo $ACR_TOKEN | docker login testmagoftware.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
           # Push obrazu
