@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SHORT_SHA: ${{ github.sha[:7] }}
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -41,4 +44,22 @@ jobs:
 
       - name: Build container (no push)
         run: |
-          docker build -t test-image:ci .
+          docker build -t greeting-service:${SHORT_SHA} .
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # jeśli masz secret dla client secret:
+          # client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Tag Docker image for ACR
+        run: |
+          docker tag greeting-service:$SHORT_SHA testmagoftware.azurecr.io/greeting-service:$SHORT_SHA
+
+      - name: Push Docker image to ACR
+        run: |
+          az acr login --name testmagoftware
+          docker push testmagoftware.azurecr.io/greeting-service:$SHORT_SHA
