@@ -66,6 +66,6 @@ jobs:
 
       - name: Push Docker image to ACR
         run: |
-          az acr login --name testmagoftware
+          az acr login --name testmagoftware --tenant ${{ secrets.AZURE_TENANT_ID }}
           docker push testmagoftware.azurecr.io/greeting-service:$SHORT_SHA
 
