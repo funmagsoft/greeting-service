@@ -73,3 +73,5 @@ jobs:
           echo $ACR_TOKEN | docker login testmagoftware.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
           # Push obrazu
           docker push testmagoftware.azurecr.io/greeting-service:${SHORT_SHA}
+
+
