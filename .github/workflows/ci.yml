@@ -69,3 +69,4 @@ jobs:
       - name: Push Docker image to ACR
         run: |
           docker push hycomcminternal.azurecr.io/greeting-service:${SHORT_SHA}
+
