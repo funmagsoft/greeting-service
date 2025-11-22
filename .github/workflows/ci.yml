@@ -11,6 +11,9 @@ permissions:
 
 env:
   SHORT_SHA: ""
+  APP_NAME: ${{ vars.APP_NAME }}
+  ACR_NAME: ${{ vars.ACR_NAME }}
+  ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
 
 jobs:
   build-test:
@@ -48,7 +51,7 @@ jobs:
 
       - name: Build build image
         run: |
-          docker build -t greeting-service:${SHORT_SHA} .
+          docker build -t ${APP_NAME}:${SHORT_SHA} .
 
       - name: Login to Azure with OIDC
         uses: azure/login@v1
@@ -60,13 +63,13 @@ jobs:
 
       - name: Login to ACR
         run: |
-          az acr login --name hycomcminternal
+          az acr login --name ${ACR_NAME}
 
       - name: Tag Docker image for ACR
         run: |
-          docker tag greeting-service:$SHORT_SHA hycomcminternal.azurecr.io/greeting-service:$SHORT_SHA
+          docker tag ${APP_NAME}:$SHORT_SHA ${ACR_LOGIN_SERVER}/${APP_NAME}:$SHORT_SHA
 
       - name: Push Docker image to ACR
         run: |
-          docker push hycomcminternal.azurecr.io/greeting-service:${SHORT_SHA}
+          docker push ${ACR_LOGIN_SERVER}/${APP_NAME}:${SHORT_SHA}
 
