@@ -1,0 +1,78 @@
+name: Promote to DEV
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Image"] # nazwa Twojego build-main.yml
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  APP_NAME: ${{ vars.APP_NAME }}
+  ACR_NAME: ${{ vars.ACR_NAME }}
+  ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+
+jobs:
+  promote-dev:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download SHA artifact produced by build-main.yml
+      - name: Download image SHA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-sha
+          path: ./
+
+      - name: Read SHA value
+        id: read_sha
+        run: |
+          SHORT_SHA=$(cat image-sha.txt)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Show SHA
+        run: echo "Promoting SHA ${{ steps.read_sha.outputs.sha }} to DEV"
+
+      # Login to Azure using OIDC
+      - name: Azure Login with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Promote SHA tag → dev-SHA and dev-latest
+      - name: Promote image to DEV tags
+        run: |
+          az acr import \
+            --name ${{ env.ACR_NAME }} \
+            --source ${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}:${{ steps.read_sha.outputs.sha }} \
+            --image ${{ env.APP_NAME }}:dev-${{ steps.read_sha.outputs.sha }} \
+            --image ${{ env.APP_NAME }}:dev-latest \
+            --force
+
+      # Login to AKS
+      - name: AKS Login
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RG }} \
+            --name ${{ secrets.AKS_NAME }} \
+            --overwrite-existing
+
+      # # Deploy using Helm
+      # - name: Deploy to AKS DEV
+      #   run: |
+      #     helm upgrade --install ${{ env.APP_NAME }}-dev ./helm \
+      #       --namespace dev \
+      #       --create-namespace \
+      #       --set image.repository=${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }} \
+      #       --set image.tag=dev-${{ steps.read_sha.outputs.sha }}

@@ -15,6 +15,6 @@ public class GreetingController {
             throw new IllegalArgumentException("Param 'name' nie może być null");
         }
         // prosty przykład - można tu dodać walidację długości, znaki itp.
-        return new Greeting("hello " + name);
+        return new Greeting("hello you " + name);
     }
 }
