@@ -52,12 +52,13 @@ jobs:
       - name: Set SHORT_SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      # --- STOP: poniższe kroki tylko dla push do main ---
-
-      - name: Skip container build on PR
+      # --- BUILD DOCKER IMAGE ON PR ---
+      - name: Build Docker image for PR (no push)
         if: ${{ github.event_name == 'pull_request' }}
-        run: echo "Pull request build completed. Skipping docker build + push."
+        run: |
+          docker build -t ${APP_NAME}:${SHORT_SHA}-pr .
 
+      # --- PUSH WORK STARTS HERE (ONLY PUSH TO MAIN) ---
       - name: Build Docker image
         if: ${{ github.event_name == 'push' }}
         run: |
