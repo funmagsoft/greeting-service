@@ -112,7 +112,7 @@ jobs:
       - name: Deploy to AKS dev via Helm
         if: ${{ github.event_name == 'push' }}
         run: |
-          helm upgrade --install ${APP_NAME}-dev ./helm \
+          helm upgrade --install ${APP_NAME} ./helm \
             --namespace dev \
             --create-namespace \
             --set image.repository=${ACR_LOGIN_SERVER}/${APP_NAME} \
