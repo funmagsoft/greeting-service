@@ -1,0 +1,99 @@
+name: Build and Push Image
+
+on:
+  pull_request:
+    branches: [main]
+
+  push:
+    branches: [main]
+
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  APP_NAME: ${{ vars.APP_NAME }}
+  ACR_NAME: ${{ vars.ACR_NAME }}
+  ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Build Maven (with tests)
+        run: mvn -B -DskipTests=false verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
+
+      - name: Set SHORT_SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      # --- STOP: poniższe kroki tylko dla push do main ---
+
+      - name: Skip container build on PR
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "Pull request build completed. Skipping docker build + push."
+
+      - name: Build Docker image
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          docker build -t ${APP_NAME}:${SHORT_SHA} .
+
+      - name: Azure Login (OIDC)
+        if: ${{ github.event_name == 'push' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        if: ${{ github.event_name == 'push' }}
+        run: az acr login --name ${ACR_NAME}
+
+      - name: Tag images (sha + latest)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          docker tag ${APP_NAME}:${SHORT_SHA} ${ACR_LOGIN_SERVER}/${APP_NAME}:${SHORT_SHA}
+          docker tag ${APP_NAME}:${SHORT_SHA} ${ACR_LOGIN_SERVER}/${APP_NAME}:latest
+
+      - name: Push images to ACR
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          docker push ${ACR_LOGIN_SERVER}/${APP_NAME}:${SHORT_SHA}
+          docker push ${ACR_LOGIN_SERVER}/${APP_NAME}:latest
+
+      - name: Save SHA artifact
+        if: ${{ github.event_name == 'push' }}
+        run: echo "${SHORT_SHA}" > image-sha.txt
+
+      - name: Upload Image SHA Artifact
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-sha
+          path: image-sha.txt
