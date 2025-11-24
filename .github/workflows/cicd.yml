@@ -1,0 +1,23 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  run-shared-workflow:
+    uses: funmagsoft/github-actions-templates/.github/workflows/build-and-deploy.yml@main
+
+    with:
+      app_name: greeting-service-a
+      aks_namespace: dev
+
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AKS_RG: ${{ secrets.AKS_RG }}
+      AKS_NAME: ${{ secrets.AKS_NAME }}
