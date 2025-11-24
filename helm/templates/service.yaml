@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "greeting-service.fullname" . }}
+  name: {{ include "service.fullname" . }}
   labels:
-    app: {{ include "greeting-service.name" . }}
+    app: {{ include "service.name" . }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: {{ include "greeting-service.name" . }}
+    app: {{ include "service.name" . }}
   ports:
     - protocol: TCP
       port: {{ .Values.service.port }}

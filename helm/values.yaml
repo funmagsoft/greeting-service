@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: myacr.azurecr.io/greeting-service
+  repository: hycomcminternal.azurecr.io/greeting-service
   tag: latest
   pullPolicy: IfNotPresent
 

@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "greeting-service.fullname" . }}
+  name: {{ include "service.fullname" . }}
   labels:
-    app: {{ include "greeting-service.name" . }}
+    app: {{ include "service.name" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "greeting-service.name" . }}
+      app: {{ include "service.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "greeting-service.name" . }}
+        app: {{ include "service.name" . }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
