@@ -16,7 +16,7 @@ jobs:
     uses: funmagsoft/github-actions-templates/.github/workflows/build-and-deploy.yml@main
 
     with:
-      app_name: greeting-service-a
+      app_name: greeting-service
       aks_namespace: dev
 
     secrets:
