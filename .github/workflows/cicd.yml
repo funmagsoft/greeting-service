@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   run-shared-workflow:
     uses: funmagsoft/github-actions-templates/.github/workflows/build-and-deploy.yml@main
