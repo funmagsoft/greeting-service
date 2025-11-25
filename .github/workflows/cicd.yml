@@ -12,24 +12,6 @@ permissions:
   contents: read
 
 jobs:
-  # STARY WORKFLOW - pozostaje jako fallback (WYŁĄCZONY)
-  legacy-build-and-deploy:
-    name: "Legacy: Build and Deploy (fallback)"
-    if: false  # WYŁĄCZONY - gotowy do włączenia w razie problemów
-    uses: funmagsoft/github-actions-templates/.github/workflows/build-and-deploy.yml@main
-
-    with:
-      app_name: greeting-service
-      aks_namespace: dev
-
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AKS_RG: ${{ secrets.AKS_RG }}
-      AKS_NAME: ${{ secrets.AKS_NAME }}
-
-  # NOWY WORKFLOW - tylko CI (build + push)
   build:
     name: "Build (CI)"
     uses: funmagsoft/github-actions-templates/.github/workflows/build.yml@main
@@ -42,7 +24,6 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  # NOWY WORKFLOW - trigger GitOps deploy (tylko na push do main)
   deploy-to-dev:
     name: "Deploy to Dev (GitOps)"
     needs: build
