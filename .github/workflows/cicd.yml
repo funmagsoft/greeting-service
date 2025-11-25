@@ -12,7 +12,10 @@ permissions:
   contents: read
 
 jobs:
-  run-shared-workflow:
+  # STARY WORKFLOW - pozostaje jako fallback (WYŁĄCZONY)
+  legacy-build-and-deploy:
+    name: "Legacy: Build and Deploy (fallback)"
+    if: false  # WYŁĄCZONY - gotowy do włączenia w razie problemów
     uses: funmagsoft/github-actions-templates/.github/workflows/build-and-deploy.yml@main
 
     with:
@@ -25,3 +28,47 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AKS_RG: ${{ secrets.AKS_RG }}
       AKS_NAME: ${{ secrets.AKS_NAME }}
+
+  # NOWY WORKFLOW - tylko CI (build + push)
+  build:
+    name: "Build (CI)"
+    uses: funmagsoft/github-actions-templates/.github/workflows/build.yml@main
+
+    with:
+      app_name: greeting-service
+
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  # NOWY WORKFLOW - trigger GitOps deploy (tylko na push do main)
+  deploy-to-dev:
+    name: "Deploy to Dev (GitOps)"
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger GitOps deployment
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITOPS_PAT }}
+          repository: funmagsoft/gitops
+          event-type: deploy
+          client-payload: |
+            {
+              "app_name": "greeting-service",
+              "environment": "dev",
+              "image_tag": "${{ needs.build.outputs.image_tag }}",
+              "acr_server": "${{ vars.ACR_LOGIN_SERVER }}"
+            }
+
+      - name: Deployment triggered
+        run: |
+          echo "### ✅ GitOps Deployment Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: greeting-service" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ needs.build.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View deployment workflow](https://github.com/funmagsoft/gitops/actions/workflows/deploy.yml)" >> $GITHUB_STEP_SUMMARY
