@@ -1,6 +1,21 @@
 server:
   port: 8080
+
 spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+
+# Azure Configuration
+azure:
+  keyvault:
+    url: https://hycomcminternal-kv.vault.azure.net
+  storage:
+    account-name: hycomcminternal
+    container-name: test-container-dev
+
+# Logging dla Azure SDK (opcjonalnie)
+logging:
+  level:
+    com.azure: INFO
+    com.example.greeting: DEBUG
